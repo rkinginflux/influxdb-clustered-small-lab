@@ -1,0 +1,7 @@
+# Optional overlay, ONLY with values.yaml on a fresh install.
+# HTTP, trusted LAN only; ensure 32333 is unused and firewall access.
+s3:
+  service:
+    type: NodePort
+    nodePorts:
+      http: 32333

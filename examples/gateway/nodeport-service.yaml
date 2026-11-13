@@ -1,0 +1,15 @@
+# Optional trusted-LAN access after the localhost-only smoke test.
+apiVersion: v1
+kind: Service
+metadata:
+  name: clustered-gateway
+  namespace: influxdb3-clustered
+spec:
+  type: NodePort
+  selector:
+    app: clustered-gateway
+  ports:
+    - name: https
+      port: 443
+      targetPort: https
+      nodePort: 31443

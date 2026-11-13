@@ -1,0 +1,22 @@
+# Unique, read-only kubelet statistics permissions; no Secret access or role adoption.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clustered-telegraf-stats
+rules:
+  - apiGroups: [""]
+    resources: [nodes/stats, nodes/pods]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: clustered-telegraf-stats
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: clustered-telegraf-stats
+subjects:
+  - kind: ServiceAccount
+    name: clustered-telegraf
+    namespace: telegraf

@@ -1,0 +1,85 @@
+# influxdata/telegraf-ds 1.1.57; INFLUX_URL and INFLUX_TOKEN come from the collector Secret.
+image:
+  repo: telegraf
+  tag: 1.40.2-alpine
+  pullPolicy: IfNotPresent
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+nodeSelector:
+  kubernetes.io/os: linux
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+rbac:
+  create: false
+serviceAccount:
+  create: true
+  name: clustered-telegraf
+envFromSecret: telegraf-clustered-token
+volumes:
+  - name: clustered-ca
+    configMap:
+      name: telegraf-clustered-ca
+
+  - name: host-udev
+    hostPath:
+      path: /run/udev
+      type: Directory
+mountPoints:
+  - name: clustered-ca
+    mountPath: /etc/clustered-ca
+    readOnly: true
+
+  - name: host-udev
+    mountPath: /run/udev
+    readOnly: true
+override_config:
+  toml: |
+    [global_tags]
+      cluster = "clustered-lab"
+    [agent]
+      interval = "10s"
+      flush_interval = "10s"
+      round_interval = true
+      collection_jitter = "2s"
+      flush_jitter = "2s"
+      metric_batch_size = 1000
+      metric_buffer_limit = 10000
+      hostname = "${HOSTNAME}"
+      omit_hostname = false
+    [[inputs.cpu]]
+      percpu = true
+      totalcpu = true
+      collect_cpu_time = false
+    [[inputs.mem]]
+    [[inputs.disk]]
+      ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+    [[inputs.diskio]]
+      skip_serial_number = true
+    [[inputs.kernel]]
+    [[inputs.net]]
+    [[inputs.processes]]
+    [[inputs.swap]]
+    [[inputs.system]]
+    [[inputs.internal]]
+    [[inputs.kubernetes]]
+      url = "https://${HOSTIP}:10250"
+      bearer_token = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+      # The existing kubelet serving certificates are not trusted by this pod.
+      # Applies only to the kubelet scrape; Clustered TLS remains verified below.
+      insecure_skip_verify = true
+    [[outputs.influxdb_v2]]
+      urls = ["${INFLUX_URL}"]
+      organization = ""
+      bucket = "telegraf"
+      token = "${INFLUX_TOKEN}"
+      tls_ca = "/etc/clustered-ca/tls.crt"
+      insecure_skip_verify = false
+      content_encoding = "gzip"
+      timeout = "15s"

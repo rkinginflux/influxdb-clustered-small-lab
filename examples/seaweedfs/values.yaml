@@ -1,0 +1,85 @@
+# SeaweedFS chart 4.48.0 only. Fresh, non-HA lab; do not overlay onto an existing release.
+image:
+  tag: "4.48"
+allInOne:
+  enabled: false
+master:
+  enabled: true
+  replicas: 1
+  defaultReplication: "000"
+  volumeSizeLimitMB: 1000
+  data:
+    type: persistentVolumeClaim
+    size: 1Gi
+    storageClass: local-path
+  logs:
+    type: emptyDir
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {cpu: "1", memory: 512Mi}
+volume:
+  enabled: true
+  replicas: 1
+  dataDirs:
+    - name: data1
+      type: persistentVolumeClaim
+      size: 20Gi
+      storageClass: local-path
+      maxVolumes: 7
+  # Index remains alongside persistent data; no ephemeral separate index.
+  idx: {}
+  logs:
+    type: emptyDir
+  # No automated PVC resizing for this fixed-size lab.
+  resizeHook:
+    enabled: false
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: "1", memory: 1Gi}
+filer:
+  enabled: true
+  replicas: 1
+  data:
+    type: persistentVolumeClaim
+    size: 2Gi
+    storageClass: local-path
+  logs:
+    type: emptyDir
+  # Explicitly keep embedded LevelDB2 metadata on the persistent /data mount.
+  extraEnvironmentVars:
+    WEED_LEVELDB2_ENABLED: "true"
+    WEED_LEVELDB2_DIR: /data/filerldb2
+    WEED_MYSQL_ENABLED: "false"
+    WEED_FILER_BUCKETS_FOLDER: /buckets
+  s3:
+    enabled: false
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: "1", memory: 1Gi}
+s3:
+  enabled: true
+  replicas: 1
+  enableAuth: true
+  existingConfigSecret: seaweedfs-s3-config
+  port: 8333
+  # Avoid a second, automatically assigned NodePort for metrics.
+  metricsPort: 0
+  httpsPort: 0
+  icebergPort: 0
+  lancePort: 0
+  logs:
+    type: emptyDir
+  service:
+    type: ClusterIP
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {cpu: "1", memory: 512Mi}
+admin:
+  enabled: false
+worker:
+  enabled: false
+  replicas: 0
+cosi:
+  enabled: false
+sftp:
+  enabled: false

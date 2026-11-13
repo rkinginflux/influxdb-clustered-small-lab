@@ -1,0 +1,1408 @@
+{
+  "id": null,
+  "uid": "clustered-telegraf-nodes",
+  "title": "Telegraf \u2014 Clustered Lab Nodes",
+  "description": "Live node metrics from the telegraf database via read-only InfluxQL. Filesystem peak is the maximum in the selected time range; counters are per-second rates.",
+  "tags": [
+    "telegraf",
+    "clustered",
+    "lab"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "30s",
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "editable": true,
+  "annotations": {
+    "list": []
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "host",
+        "label": "Host",
+        "type": "query",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS_CLUSTERED_TELEGRAF}"
+        },
+        "query": "SHOW TAG VALUES FROM \"cpu\" WITH KEY = \"host\"",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": []
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "CPU busy",
+      "type": "bargauge",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT 100 - last(\"usage_idle\") AS \"busy\" FROM \"cpu\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ AND \"cpu\" = 'cpu-total' GROUP BY \"host\"",
+          "resultFormat": "time_series",
+          "alias": "$tag_host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizHeight": 24,
+        "maxVizHeight": 42,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 20
+        }
+      },
+      "description": "One usage bar per selected host. Green below 75%, amber at 75%, red at 90%. Latest observed value in the selected time range.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 2,
+      "title": "Memory used",
+      "type": "bargauge",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT last(\"used_percent\") FROM \"mem\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ GROUP BY \"host\"",
+          "resultFormat": "time_series",
+          "alias": "$tag_host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizHeight": 24,
+        "maxVizHeight": 42,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 20
+        }
+      },
+      "description": "One usage bar per selected host. Green below 75%, amber at 75%, red at 90%. Latest observed value in the selected time range.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 3,
+      "title": "Filesystem usage (peak)",
+      "type": "bargauge",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT max(\"used_percent\") FROM \"disk\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ GROUP BY \"host\"",
+          "resultFormat": "time_series",
+          "alias": "$tag_host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizHeight": 24,
+        "maxVizHeight": 42,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 20
+        }
+      },
+      "description": "One usage bar per selected host. Green below 75%, amber at 75%, red at 90%. Peak filesystem usage over the selected time range.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 4,
+      "title": "Uptime",
+      "type": "stat",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT last(\"uptime\") FROM \"system\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ GROUP BY \"host\"",
+          "resultFormat": "time_series",
+          "alias": "$tag_host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          },
+          "decimals": 0,
+          "noValue": "No recent samples"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "vertical",
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "wideLayout": false,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 22
+        }
+      },
+      "description": "Node uptime, labeled by host. The host selector applies to every card and chart.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 5,
+      "title": "CPU busy over time",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT 100 - mean(\"usage_idle\") AS \"busy\" FROM \"cpu\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ AND \"cpu\" = 'cpu-total' GROUP BY time($__interval), \"host\" fill(null)",
+          "resultFormat": "time_series",
+          "alias": "$tag_host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      },
+      "description": "Live host metrics. Use the host selector and hover for per-series values; missing samples remain gaps.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 6,
+      "title": "Memory used over time",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 7,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT mean(\"used_percent\") FROM \"mem\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ GROUP BY time($__interval), \"host\" fill(null)",
+          "resultFormat": "time_series",
+          "alias": "$tag_host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      },
+      "description": "Live host metrics. Use the host selector and hover for per-series values; missing samples remain gaps.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 7,
+      "title": "Filesystem usage",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT mean(\"used_percent\") FROM \"disk\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ GROUP BY time($__interval), \"host\", \"path\" fill(null)",
+          "resultFormat": "time_series",
+          "alias": "$tag_host $tag_path"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      },
+      "description": "Live host metrics. Use the host selector and hover for per-series values; missing samples remain gaps.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 8,
+      "title": "Load average (1 minute)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT mean(\"load1\") FROM \"system\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ GROUP BY time($__interval), \"host\" fill(null)",
+          "resultFormat": "time_series",
+          "alias": "$tag_host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      },
+      "description": "Live host metrics. Use the host selector and hover for per-series values; missing samples remain gaps.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 9,
+      "title": "Network receive",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT non_negative_derivative(mean(\"bytes_recv\"), 1s) FROM \"net\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ AND \"interface\" !~ /^(lo|cali.*|veth.*|flannel.*|cni.*)$/ GROUP BY time($__interval), \"host\", \"interface\" fill(null)",
+          "resultFormat": "time_series",
+          "alias": "$tag_host $tag_interface"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      },
+      "description": "Live host metrics. Use the host selector and hover for per-series values; missing samples remain gaps.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 10,
+      "title": "Network transmit",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 25,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT non_negative_derivative(mean(\"bytes_sent\"), 1s) FROM \"net\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ AND \"interface\" !~ /^(lo|cali.*|veth.*|flannel.*|cni.*)$/ GROUP BY time($__interval), \"host\", \"interface\" fill(null)",
+          "resultFormat": "time_series",
+          "alias": "$tag_host $tag_interface"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      },
+      "description": "Live host metrics. Use the host selector and hover for per-series values; missing samples remain gaps.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 11,
+      "title": "Disk reads",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT non_negative_derivative(mean(\"read_bytes\"), 1s) FROM \"diskio\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ AND \"name\" !~ /^(loop|ram).*$/ GROUP BY time($__interval), \"host\", \"name\" fill(null)",
+          "resultFormat": "time_series",
+          "alias": "$tag_host $tag_name"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      },
+      "description": "Live host metrics. Use the host selector and hover for per-series values; missing samples remain gaps.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 12,
+      "title": "Disk writes",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 34,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT non_negative_derivative(mean(\"write_bytes\"), 1s) FROM \"diskio\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ AND \"name\" !~ /^(loop|ram).*$/ GROUP BY time($__interval), \"host\", \"name\" fill(null)",
+          "resultFormat": "time_series",
+          "alias": "$tag_host $tag_name"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      },
+      "description": "Live host metrics. Use the host selector and hover for per-series values; missing samples remain gaps.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 13,
+      "title": "Kubernetes node CPU (cores)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT mean(\"cpu_usage_nanocores\") / 1000000000 FROM \"kubernetes_node\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ GROUP BY time($__interval), \"host\" fill(null)",
+          "resultFormat": "time_series",
+          "alias": "$tag_host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      },
+      "description": "Live host metrics. Use the host selector and hover for per-series values; missing samples remain gaps.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 14,
+      "title": "Kubernetes node working memory",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 43,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT mean(\"memory_working_set_bytes\") FROM \"kubernetes_node\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ GROUP BY time($__interval), \"host\" fill(null)",
+          "resultFormat": "time_series",
+          "alias": "$tag_host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      },
+      "description": "Live host metrics. Use the host selector and hover for per-series values; missing samples remain gaps.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 15,
+      "title": "Telegraf output buffer",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT max(\"buffer_size\") FROM \"internal_write\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ GROUP BY time($__interval), \"host\" fill(null)",
+          "resultFormat": "time_series",
+          "alias": "$tag_host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      },
+      "description": "Live host metrics. Use the host selector and hover for per-series values; missing samples remain gaps.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    },
+    {
+      "id": 16,
+      "title": "Telegraf metrics written per second",
+      "type": "timeseries",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_CLUSTERED_TELEGRAF}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 52,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_CLUSTERED_TELEGRAF}"
+          },
+          "rawQuery": true,
+          "query": "SELECT non_negative_derivative(mean(\"metrics_written\"), 1s) FROM \"internal_write\" WHERE $timeFilter AND \"host\" =~ /^${host:regex}$/ GROUP BY time($__interval), \"host\" fill(null)",
+          "resultFormat": "time_series",
+          "alias": "$tag_host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "noValue": "No recent samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": false
+        }
+      },
+      "description": "Live host metrics. Use the host selector and hover for per-series values; missing samples remain gaps.",
+      "transparent": false,
+      "pluginVersion": "12.1.1"
+    }
+  ],
+  "__inputs": [
+    {
+      "name": "DS_CLUSTERED_TELEGRAF",
+      "label": "Clustered Telegraf (InfluxQL)",
+      "description": "Read-only InfluxQL datasource for the telegraf database",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ]
+}

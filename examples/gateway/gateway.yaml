@@ -1,0 +1,86 @@
+# Lab TLS gateway, accessed with localhost-only port-forward by default.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clustered-gateway
+  namespace: influxdb3-clustered
+data:
+  default.conf: "server {\n  listen 8443 ssl;\n  http2 on;\n  server_name _;\n  ssl_certificate\
+    \ /etc/nginx/tls/tls.crt;\n  ssl_certificate_key /etc/nginx/tls/tls.key;\n  client_max_body_size\
+    \ 16m;\n  access_log off; # Do not log request URLs or query strings.\n  location\
+    \ = /healthz { return 200 'ok\\n'; }\n  location /api/v0 { proxy_pass http://core:9091;\
+    \ proxy_next_upstream off; }\n  location /api/v2/write { proxy_pass http://global-router:8080;\
+    \ proxy_next_upstream off; }\n  location /write { proxy_pass http://global-router:8080;\
+    \ proxy_next_upstream off; }\n  location /query { proxy_pass http://iox-shared-querier:8081;\
+    \ }\n  location /ping { proxy_pass http://iox-shared-querier:8081; }\n  location\
+    \ /arrow.flight.protocol.FlightService {\n    grpc_pass grpc://iox-shared-querier:8082;\n\
+    \    grpc_read_timeout 300s;\n    grpc_next_upstream off;\n  }\n  location /grpc.reflection.v1alpha.ServerReflection\
+    \ {\n    grpc_pass grpc://iox-shared-querier:8082;\n  }\n  location / { grpc_pass\
+    \ grpc://core:8091; grpc_next_upstream off; }\n}\n"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clustered-gateway
+  namespace: influxdb3-clustered
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clustered-gateway
+  template:
+    metadata:
+      labels:
+        app: clustered-gateway
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.28-alpine
+        ports:
+        - name: https
+          containerPort: 8443
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 500m
+            memory: 128Mi
+        readinessProbe:
+          httpGet:
+            scheme: HTTPS
+            path: /healthz
+            port: https
+        livenessProbe:
+          httpGet:
+            scheme: HTTPS
+            path: /healthz
+            port: https
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+        - name: tls
+          mountPath: /etc/nginx/tls
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: clustered-gateway
+      - name: tls
+        secret:
+          secretName: clustered-gateway-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clustered-gateway
+  namespace: influxdb3-clustered
+spec:
+  type: ClusterIP
+  selector:
+    app: clustered-gateway
+  ports:
+  - name: https
+    port: 443
+    targetPort: https

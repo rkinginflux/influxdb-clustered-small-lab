@@ -1,0 +1,85 @@
+# Secret references only. Generate credentials separately; do not rotate on an existing PVC.
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb3-postgres
+  namespace: influxdb3-clustered
+spec:
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: postgres
+  selector:
+    app: influxdb3-postgres
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb3-postgres-headless
+  namespace: influxdb3-clustered
+spec:
+  clusterIP: None
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: postgres
+  selector:
+    app: influxdb3-postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: influxdb3-postgres
+  namespace: influxdb3-clustered
+spec:
+  serviceName: influxdb3-postgres-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: influxdb3-postgres
+  template:
+    metadata:
+      labels:
+        app: influxdb3-postgres
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: postgres
+        image: postgres:14-alpine
+        ports:
+        - name: postgres
+          containerPort: 5432
+        envFrom:
+        - secretRef:
+            name: influxdb3-postgres-auth
+        env:
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: '1'
+            memory: 1Gi
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -ec
+            - exec pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 5Gi

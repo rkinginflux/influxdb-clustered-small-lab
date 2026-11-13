@@ -1,0 +1,126 @@
+# Lab-only sizing; chart 0.1.28 / package 20261016-2070790.
+# Label ONLY nodes with independently verified compatible CPUs.
+operatorImageVersion: v0.0.22
+image:
+  tag: 20261016-2070790
+imagePullSecrets:
+- name: gar-docker-secret
+objectStore:
+  bucket: lab
+  s3:
+    endpoint: http://seaweedfs-s3.s3.svc.cluster.local:8333
+    allowHttp: 'true'
+    accessKey:
+      valueFrom:
+        secretKeyRef:
+          name: influxdb3-object-store-access-key
+          key: accessKey
+    secretKey:
+      valueFrom:
+        secretKeyRef:
+          name: influxdb3-object-store-secret-key
+          key: secretKey
+    region: us-east-1
+catalog:
+  dsn:
+    SecretName: influxdb3-catalog-dsn
+    SecretKey: dsn
+ingesterStorage:
+  storageClassName: local-path
+  storage: 5Gi
+monitoringStorage:
+  storageClassName: local-path
+  storage: 1Gi
+ingress:
+  # Intentionally unhandled: access is through the separate ClusterIP lab gateway.
+  # Confirm no controller handles this class before installing.
+  http:
+    className: lab-gateway-unused
+  grpc:
+    className: lab-gateway-unused
+  hosts:
+  - iox.local
+components:
+  common:
+    template:
+      nodeSelector:
+        kubernetes.io/os: linux
+  ingester:
+    template:
+      nodeSelector:
+        lab.example.com/influxdb-avx2: 'true'
+  querier:
+    template:
+      nodeSelector:
+        lab.example.com/influxdb-avx2: 'true'
+  compactor:
+    template:
+      nodeSelector:
+        lab.example.com/influxdb-avx2: 'true'
+  catalog:
+    template:
+      nodeSelector:
+        lab.example.com/influxdb-avx2: 'true'
+  router:
+    template:
+      nodeSelector:
+        lab.example.com/influxdb-avx2: 'true'
+  garbage-collector:
+    template:
+      nodeSelector:
+        lab.example.com/influxdb-avx2: 'true'
+resources:
+  ingester:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+      replicas: 1
+    limits:
+      cpu: '1'
+      memory: 2Gi
+  querier:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+      replicas: 1
+    limits:
+      cpu: '1'
+      memory: 2Gi
+  compactor:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+      replicas: 1
+    limits:
+      cpu: '1'
+      memory: 2Gi
+  router:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+      replicas: 1
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  catalog:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+      replicas: 3
+    limits:
+      cpu: 500m
+      memory: 1Gi
+admin:
+  identityProvider: local
+  jwksEndpoint: http://localhost/.well-known/jwks.json
+  users:
+  - firstName: Lab
+    lastName: Administrator
+    email: admin@example.invalid
+    id: local-admin
+  dsn:
+    valueFrom:
+      secretKeyRef:
+        name: influxdb3-admin-dsn
+        key: dsn
+featureFlags: []

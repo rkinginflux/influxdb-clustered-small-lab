@@ -1,0 +1,114 @@
+# Local/trusted-LAN access. Reuses the existing lab TLS certificate.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data
+  namespace: influxdb3-clustered
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-gateway
+  namespace: influxdb3-clustered
+data:
+  default.conf: |
+    map $http_upgrade $connection_upgrade {
+      default upgrade;
+      '' close;
+    }
+    server {
+      listen 8443 ssl;
+      server_name _;
+      ssl_certificate /etc/nginx/tls/tls.crt;
+      ssl_certificate_key /etc/nginx/tls/tls.key;
+      client_max_body_size 16m;
+      location = /healthz { return 200 'ok\n'; }
+      location / {
+        proxy_pass http://grafana:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_read_timeout 300s;
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-gateway
+  namespace: influxdb3-clustered
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana-gateway
+  template:
+    metadata:
+      labels:
+        app: grafana-gateway
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: nginx
+          image: nginx:1.28-alpine
+          ports:
+            - name: https
+              containerPort: 8443
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /healthz
+              port: https
+          livenessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /healthz
+              port: https
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/conf.d
+              readOnly: true
+            - name: tls
+              mountPath: /etc/nginx/tls
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: grafana-gateway
+        - name: tls
+          secret:
+            secretName: clustered-gateway-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-gateway
+  namespace: influxdb3-clustered
+spec:
+  type: NodePort
+  selector:
+    app: grafana-gateway
+  ports:
+    - name: https
+      port: 443
+      targetPort: https
+      nodePort: 32443
